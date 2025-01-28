@@ -338,55 +338,53 @@ function Possessions_BuildDisplayIndices()
 	local _;
 
 	for index, value in pairs(PossessionsData[realmName]) do
-		 if (not value.faction or value.faction == playerFaction) then
-			for index2, value2 in pairs(value.items) do
-				for index3, value3 in pairs(value2) do
-					if (value3[INDEX_LINK]) then
-						--itemName, itemString, itemQuality, itemMinLevel, itemType, itemSubType, itemStackCount, itemEquipLoc, itemTexture
-						_, _, _, _, _, _, _, slot = GetItemInfo("item:" .. value3[INDEX_LINK]);
+		for index2, value2 in pairs(value.items) do
+			for index3, value3 in pairs(value2) do
+				if (value3[INDEX_LINK]) then
+					--itemName, itemString, itemQuality, itemMinLevel, itemType, itemSubType, itemStackCount, itemEquipLoc, itemTexture
+					_, _, _, _, _, _, _, slot = GetItemInfo("item:" .. value3[INDEX_LINK]);
+				end
+
+				if( value3[INDEX_NAME] and 
+					(not searchString or (searchString and string.find(string.lower(value3[INDEX_NAME]), searchString)))
+					and (not searchChar or searchChar == index)
+					and (not searchLoc or searchLoc == Possessions_Bag2Loc(index2))
+					and (not searchSlot or searchSlot == slot)
+				  )  then
+
+					link = value3[INDEX_NAME];
+
+					if (not TempTable[link]) then
+						TempTable[link] = { };
+						TempTable[link][INDEX_LINK] = value3[INDEX_LINK];
+						TempTable[link][INDEX_RARITY] = value3[INDEX_RARITY];
+						TempTable[link][INDEX_ICON] = value3[INDEX_ICON];
+						TempTable[link][INDEX_QUANTITY] = 0;
+					elseif( TempTable[link][INDEX_RARITY] == -1 ) then
+						TempTable[link][INDEX_RARITY] = value3[INDEX_RARITY];
 					end
 
-					if( value3[INDEX_NAME] and 
-						(not searchString or (searchString and string.find(string.lower(value3[INDEX_NAME]), searchString)))
-						and (not searchChar or searchChar == index)
-						and (not searchLoc or searchLoc == Possessions_Bag2Loc(index2))
-						and (not searchSlot or searchSlot == slot)
-					  )  then
+					if( not TempTable[link][INDEX_LINK] and value3[INDEX_LINK] ) then
+						TempTable[link][INDEX_LINK] = value3[INDEX_LINK];
+					end
 
-						link = value3[INDEX_NAME];
+					TempTable[link][INDEX_QUANTITY] = TempTable[link][INDEX_QUANTITY] + value3[INDEX_QUANTITY];
 
-						if (not TempTable[link]) then
-							TempTable[link] = { };
-							TempTable[link][INDEX_LINK] = value3[INDEX_LINK];
-							TempTable[link][INDEX_RARITY] = value3[INDEX_RARITY];
-							TempTable[link][INDEX_ICON] = value3[INDEX_ICON];
-							TempTable[link][INDEX_QUANTITY] = 0;
-						elseif( TempTable[link][INDEX_RARITY] == -1 ) then
-							TempTable[link][INDEX_RARITY] = value3[INDEX_RARITY];
-						end
+					if( not TempTable[link][INDEX_LOCS] ) then
+						TempTable[link][INDEX_LOCS] = { };
+					end
 
-						if( not TempTable[link][INDEX_LINK] and value3[INDEX_LINK] ) then
-							TempTable[link][INDEX_LINK] = value3[INDEX_LINK];
-						end
+					if( not TempTable[link][INDEX_LOCS][index] ) then
+						TempTable[link][INDEX_LOCS][index] = { };
+					end
 
-						TempTable[link][INDEX_QUANTITY] = TempTable[link][INDEX_QUANTITY] + value3[INDEX_QUANTITY];
+					location = Possessions_Bag2Loc(index2);
 
-						if( not TempTable[link][INDEX_LOCS] ) then
-							TempTable[link][INDEX_LOCS] = { };
-						end
-
-						if( not TempTable[link][INDEX_LOCS][index] ) then
-							TempTable[link][INDEX_LOCS][index] = { };
-						end
-
-						location = Possessions_Bag2Loc(index2);
-
-						if( not TempTable[link][INDEX_LOCS][index][location] ) then
-							TempTable[link][INDEX_LOCS][index][location] = value3[INDEX_QUANTITY];
-						else
-							TempTable[link][INDEX_LOCS][index][location] = 
-							TempTable[link][INDEX_LOCS][index][location] + value3[INDEX_QUANTITY];
-						end
+					if( not TempTable[link][INDEX_LOCS][index][location] ) then
+						TempTable[link][INDEX_LOCS][index][location] = value3[INDEX_QUANTITY];
+					else
+						TempTable[link][INDEX_LOCS][index][location] = 
+						TempTable[link][INDEX_LOCS][index][location] + value3[INDEX_QUANTITY];
 					end
 				end
 			end
@@ -728,7 +726,6 @@ function Possessions_PlayerEnterWorld()
 	if (not hasEnteredOnce) then
 		Possessions_ScanMoney();
 		playerFaction = UnitFactionGroup("player");
-		PossessionsData[realmName][playerName].faction = playerFaction;
      	Possessions_Inspect();
 		Possessions_ScanInv();
 		hasEnteredOnce = true;
